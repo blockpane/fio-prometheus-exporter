@@ -11,6 +11,7 @@ import (
 	"time"
 )
 
+// NotMonitoredErr will be returned if an endpoint is not available, or has been explicitly excluded.
 type NotMonitoredErr struct {
 	Api string
 }
@@ -19,6 +20,8 @@ func (nm NotMonitoredErr) Error() string {
 	return nm.Api + " endpoint is not monitored"
 }
 
+// NullErr will be returned when a response is empty, primarily when getting information about whether a node
+// has block production enabled.
 type NullErr struct{}
 
 func (ne NullErr) Error() string {

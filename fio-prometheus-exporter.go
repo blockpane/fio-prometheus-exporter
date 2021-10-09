@@ -1,5 +1,10 @@
 package exporter
 
+/*
+ fio-prometheus-exporter is a simple prometheus exporter for FIO nodeos nodes.
+ It can connect to multiple nodes and report critical statistics.
+*/
+
 import (
 	"context"
 	"fmt"
@@ -9,6 +14,7 @@ import (
 	"time"
 )
 
+// Serve starts the exporter.
 func Serve() {
 	<-ready
 	go pollStats()
@@ -18,28 +24,28 @@ func Serve() {
 }
 
 type channels struct {
-	info chan *infoUpdate
-	net chan *netUpdate
+	info   chan *infoUpdate
+	net    chan *netUpdate
 	paused chan *paused
-	run chan *runUpdate
-	prod chan *prodUpdate
-	sched chan *schedUpdate
-	db chan *dbUpdate
+	run    chan *runUpdate
+	prod   chan *prodUpdate
+	sched  chan *schedUpdate
+	db     chan *dbUpdate
 }
 
-func pollStats()  {
+func pollStats() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	watchdog := time.NewTicker(5*time.Minute)
-	check := time.NewTicker(10*time.Second)
+	watchdog := time.NewTicker(5 * time.Minute)
+	check := time.NewTicker(10 * time.Second)
 	chans := &channels{
-		info:  make(chan *infoUpdate),
-		net:   make(chan *netUpdate),
+		info:   make(chan *infoUpdate),
+		net:    make(chan *netUpdate),
 		paused: make(chan *paused),
-		run:   make(chan *runUpdate),
-		prod:  make(chan *prodUpdate),
-		sched: make(chan *schedUpdate),
-		db:    make(chan *dbUpdate),
+		run:    make(chan *runUpdate),
+		prod:   make(chan *prodUpdate),
+		sched:  make(chan *schedUpdate),
+		db:     make(chan *dbUpdate),
 	}
 	go processInfo(ctx, chans.info)
 	go processNet(ctx, chans.net)
@@ -53,7 +59,7 @@ func pollStats()  {
 		select {
 		case <-watchdog.C:
 			for _, t := range targets {
-				if t.last.Before(time.Now().Add(-5*time.Minute)) {
+				if t.last.Before(time.Now().Add(-5 * time.Minute)) {
 					log.Printf("ERROR: watchdog has detected that %s has not updated in 5 minutes.", t.host)
 					continue
 				}
@@ -75,12 +81,12 @@ func updateHost(t *target, c *channels) {
 		log.Println(err)
 		return
 	}
-	c.info <-info
+	c.info <- info
 
 	net, err := t.net()
 	switch err.(type) {
 	case nil:
-		c.net <-net
+		c.net <- net
 	case NotMonitoredErr: // noop
 	case error:
 		log.Println(err)
@@ -100,7 +106,7 @@ func updateHost(t *target, c *channels) {
 	runtime, err := t.runtime()
 	switch err.(type) {
 	case nil:
-		c.run <-runtime
+		c.run <- runtime
 	case NotMonitoredErr: // noop
 	case error:
 		log.Println(err)
@@ -110,7 +116,7 @@ func updateHost(t *target, c *channels) {
 	switch err.(type) {
 	case nil:
 		for i := range prods {
-			c.prod <-prods[i]
+			c.prod <- prods[i]
 		}
 	case NotMonitoredErr: // noop
 	case error:
@@ -121,13 +127,13 @@ func updateHost(t *target, c *channels) {
 	if err != nil {
 		log.Println(err)
 	} else {
-		c.sched <-sched
+		c.sched <- sched
 	}
 
 	db, err := t.db()
 	switch err.(type) {
 	case nil:
-		c.db <-db
+		c.db <- db
 	case NotMonitoredErr: // noop
 	case error:
 		log.Println(err)
