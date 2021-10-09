@@ -160,19 +160,17 @@ func (t *target) runtime() (*runUpdate, error) {
 }
 
 func (t *target) producers() ([]*prodUpdate, error) {
-	//if !t.hasProducer {
-	//	return nil, NotMonitoredErr{Api: "producer"}
-	//}
 	p, e := t.api.GetFioProducers()
 	if e != nil {
 		return nil, e
 	}
-	update := make([]*prodUpdate, len(p.Producers))
+	prodCount := len(p.Producers)
+	// only top 42 to keep noise down.
+	if prodCount > 42 {
+		prodCount = 42
+	}
+	update := make([]*prodUpdate, prodCount)
 	for i := range p.Producers {
-		// only show top 42 in case there is a lot of junk.
-		if i > 41 {
-			break
-		}
 		lct, err := time.Parse("2006-01-02T15:04:05.999", p.Producers[i].LastClaimTime)
 		if err != nil {
 			return nil, err
