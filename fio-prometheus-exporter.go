@@ -6,7 +6,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"log"
 	"net/http"
-	"os"
 	"time"
 )
 
@@ -55,9 +54,8 @@ func pollStats()  {
 		case <-watchdog.C:
 			for _, t := range targets {
 				if t.last.Before(time.Now().Add(-5*time.Minute)) {
-					log.Printf("ERROR: watchdog has detected that %s has not updated in 5 minutes. Exiting.", t.host)
-					cancel()
-					os.Exit(1)
+					log.Printf("ERROR: watchdog has detected that %s has not updated in 5 minutes.", t.host)
+					continue
 				}
 			}
 
