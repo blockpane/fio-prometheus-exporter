@@ -173,7 +173,7 @@ func (t *target) producers() ([]*prodUpdate, error) {
 		prodCount = 42
 	}
 	update := make([]*prodUpdate, prodCount)
-	for i := range p.Producers {
+	for i := 0; i < prodCount; i++ {
 		lct, err := time.Parse("2006-01-02T15:04:05.999", p.Producers[i].LastClaimTime)
 		if err != nil {
 			return nil, err
