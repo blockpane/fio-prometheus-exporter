@@ -55,6 +55,13 @@ func pollStats() {
 	go processSched(ctx, chans.sched)
 	go processDb(ctx, chans.db)
 
+	go func() {
+		for {
+			time.Sleep(time.Minute)
+			ep.scrub()
+		}
+	}()
+
 	for {
 		select {
 		case <-watchdog.C:

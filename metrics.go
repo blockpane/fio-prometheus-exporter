@@ -6,11 +6,14 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promauto"
 	"log"
 	"sync"
+	"time"
 )
 
 type endpointInfo struct {
 	ChainId string
 	Version string
+
+	updated time.Time
 }
 
 type endpoints struct {
@@ -27,7 +30,18 @@ func (ep *endpoints) get(s string) *endpointInfo {
 func (ep *endpoints) set(name string, info endpointInfo) {
 	ep.mux.Lock()
 	defer ep.mux.Unlock()
+	info.updated = time.Now().UTC()
 	ep.endpoints[name] = &info
+}
+
+func (ep *endpoints) scrub() {
+	ep.mux.Lock()
+	defer ep.mux.Unlock()
+	for k, v := range ep.endpoints {
+		if v.updated.Before(time.Now().UTC().Add(-10*time.Minute)) {
+			delete(ep.endpoints, k)
+		}
+	}
 }
 
 var (
