@@ -170,6 +170,7 @@ func processInfo(ctx context.Context, updates chan *infoUpdate) {
 			ep.set(u.Url, endpointInfo{
 				ChainId: u.ChainId,
 				Version: u.Version,
+				updated: time.Now().UTC(),
 			})
 
 			head.With(l).Set(u.Head)
